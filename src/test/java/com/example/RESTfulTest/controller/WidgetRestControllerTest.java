@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.lang.reflect.Type;
 import java.util.Optional;
 
 import static org.mockito.Mockito.doReturn;
@@ -106,6 +107,48 @@ class WidgetRestControllerTest {
                 .andExpect(jsonPath("$.version", is(1)));
     }
 
+
+    @Test
+    @DisplayName("PUT /rest/widget/{id}")
+    void testUpdateWidgetSuccess()throws Exception{
+        Optional<Widget> widget = Optional.of(new Widget(1l, "Widget Name", "Description", 1));
+        Widget widgetUpdated = new Widget(1l, "New Widget Name", "New Description", 2);
+
+        doReturn(widget).when(service).findById(1L);
+        doReturn(widgetUpdated).when(service).save(any());
+
+       mockMvc.perform(put("/rest/widget/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON_VALUE).content(asJsonString(widget)).header(HttpHeaders
+                       .IF_MATCH, "1")).andExpect(status().isOk());
+
+    }
+
+    @Test
+    @DisplayName("PUT /rest/widget/{id} - Not Found")
+    void testUpdateWidgetNotFound() throws Exception{
+        Optional<Widget> widget = Optional.of(new Widget(1l, "Widget Name", "Description", 1));
+        doReturn(Optional.empty()).when(service).findById(1l);
+
+        mockMvc.perform(put("/rest/widget/{id}", 1l).contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(asJsonString(widget))
+                        .header(HttpHeaders.IF_MATCH, "1"))
+                        .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /rest/widget/{id}")
+    void testGetWidgetByIdSuccess () throws Exception{
+
+        //Widget widget = new Widget(1l, "Widget Name", "Description", 1);
+        Optional<Widget> widget = Optional.of(new Widget(1l, "Widget Name", "Description", 1));
+
+        doReturn(widget).when(service).findById(1l);
+
+        mockMvc.perform(get("/rest/widget/{id}", 1l).contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(asJsonString(widget))
+                        .header(HttpHeaders.IF_MATCH, "1"))
+                .andExpect(status().isOk());
+    }
 
     static String asJsonString(final Object obj) {
         try {
